@@ -1,0 +1,231 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Availability - Clinic Dashboard{% endblock %}
+{% block page_title %}Clinic Availability{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-bar {
+        background: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .filter-bar .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .filter-bar .filter-group {
+        flex: 1 1 auto;
+        min-width: 150px;
+    }
+    
+    .filter-bar .form-control,
+    .filter-bar .form-select {
+        width: 100%;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        font-size: 0.9rem;
+        height: 40px;
+    }
+    
+    .availability-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+        border-left: 4px solid #28a745;
+    }
+    
+    .availability-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .availability-card .info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .availability-card .info .location {
+        font-weight: 600;
+        color: #2c3e50;
+        min-width: 150px;
+    }
+    
+    .availability-card .info .date {
+        color: #6c757d;
+        min-width: 120px;
+    }
+    
+    .availability-card .info .time {
+        color: #6c757d;
+        min-width: 120px;
+    }
+    
+    .availability-card .info .slots {
+        background: #e9ecef;
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    
+    .availability-card .actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .availability-card .actions .btn {
+        padding: 5px 12px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+    }
+    
+    .status-badge {
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-badge.available { background: #d4edda; color: #155724; }
+    .status-badge.unavailable { background: #f8d7da; color: #721c24; }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .availability-card {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .availability-card .info {
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        
+        .availability-card .actions {
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+        
+        .filter-bar .filter-group {
+            flex: 1 1 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <form method="GET" class="filter-form">
+        <div class="filter-group">
+            <select name="location" class="form-select">
+                <option value="">All Locations</option>
+                {% for location in locations %}
+                <option value="{{ location.id }}" {% if selected_location == location.id|stringformat:"s" %}selected{% endif %}>
+                    {{ location.name }} - {{ location.city }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <input type="date" name="date_from" class="form-control" placeholder="From" value="{{ request.GET.date_from }}">
+        </div>
+        
+        <div class="filter-group">
+            <input type="date" name="date_to" class="form-control" placeholder="To" value="{{ request.GET.date_to }}">
+        </div>
+        
+        <div class="filter-group" style="flex: 0 1 auto;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Filter
+            </button>
+            <a href="{% url 'dashboard:availability_list' %}" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> Reset
+            </a>
+        </div>
+        
+        <div class="filter-group" style="flex: 0 1 auto; margin-left: auto;">
+            <a href="{% url 'dashboard:availability_add' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Add Availability
+            </a>
+        </div>
+    </form>
+</div>
+
+{% if availabilities %}
+    {% for availability in availabilities %}
+    <div class="availability-card">
+        <div class="info">
+            <div class="location">
+                <i class="fas fa-map-marker-alt text-primary"></i>
+                {{ availability.location.name }}
+            </div>
+            <div class="date">
+                <i class="fas fa-calendar-day"></i>
+                {{ availability.date|date:"M d, Y" }}
+                <span class="text-muted small">{{ availability.date|date:"l" }}</span>
+            </div>
+            <div class="time">
+                <i class="fas fa-clock"></i>
+                {{ availability.start_time|time:"g:i A" }} - {{ availability.end_time|time:"g:i A" }}
+            </div>
+            <div class="slots">
+                <i class="fas fa-chair"></i>
+                {{ availability.get_available_slots_count }} slots available
+            </div>
+            <div>
+                <span class="status-badge {% if availability.is_available %}available{% else %}unavailable{% endif %}">
+                    {% if availability.is_available %}Available{% else %}Unavailable{% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="actions">
+            <a href="{% url 'dashboard:availability_edit' availability.id %}" class="btn btn-sm btn-info">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="{% url 'dashboard:availability_delete' availability.id %}" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash"></i>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-calendar-times"></i>
+    <h4>No Availability Found</h4>
+    <p>No clinic availability has been added yet. Click the button below to add availability.</p>
+    <a href="{% url 'dashboard:availability_add' %}" class="btn btn-primary mt-3">
+        <i class="fas fa-plus me-2"></i>Add Availability
+    </a>
+</div>
+{% endif %}
+{% endblock %}

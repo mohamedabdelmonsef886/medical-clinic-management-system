@@ -1,0 +1,119 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ title }} - Clinic Dashboard{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 10px;
+        margin-top: 10px;
+        border: 2px solid #f0f0f0;
+        object-fit: cover;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    .form-section h6 {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-{{ icon|default:'stethoscope' }} me-2"></i>{{ title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-section">
+                        <h6>Service Information</h6>
+                        {{ form.title|as_crispy_field }}
+                        {{ form.short_description|as_crispy_field }}
+                        {{ form.description|as_crispy_field }}
+                    </div>
+                    
+                    <div class="form-section">
+                        <h6>Service Details</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.price|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.duration|as_crispy_field }}
+                            </div>
+                        </div>
+                        {{ form.icon|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-section">
+                        <h6>Settings</h6>
+                        {{ form.is_featured|as_crispy_field }}
+                        {{ form.is_active|as_crispy_field }}
+                    </div>
+                    
+                    <div class="form-section">
+                        <h6>Service Image</h6>
+                        {{ form.image|as_crispy_field }}
+                        {% if form.instance.image %}
+                        <div class="mt-2">
+                            <p class="text-muted small">Current Image:</p>
+                            <img src="{{ form.instance.image.url }}" alt="{{ form.instance.title }}" class="preview-image">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Save Service
+                </button>
+                <a href="{% url 'dashboard:services' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Services
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Preview image before upload
+    document.getElementById('id_image').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.querySelector('.preview-image');
+                if (preview) {
+                    preview.src = e.target.result;
+                } else {
+                    const img = document.createElement('img');
+                    img.className = 'preview-image';
+                    img.src = e.target.result;
+                    this.closest('.form-section').appendChild(img);
+                }
+            }.bind(this);
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+</script>
+{% endblock %}

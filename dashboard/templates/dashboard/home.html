@@ -1,0 +1,203 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Home{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Statistics Cards -->
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_appointments }}</h3>
+                <p>Total Appointments</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ pending_appointments }}</h3>
+                <p>Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ today_appointments }}</h3>
+                <p>Today's Appointments</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-info">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ unread_messages }}</h3>
+                <p>Unread Messages</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Row 2 -->
+<div class="row g-4 mt-2">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-purple">
+                <i class="fas fa-stethoscope"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_services }}</h3>
+                <p>Services</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-pink">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_testimonials }}</h3>
+                <p>Testimonials</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-teal">
+                <i class="fas fa-newspaper"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_blog_posts }}</h3>
+                <p>Blog Posts</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row g-4 mt-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-calendar me-2"></i>Recent Appointments</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in recent_appointments %}
+                            <tr>
+                                <td>{{ appointment.patient_name }}</td>
+                                <td>{{ appointment.appointment_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge {% if appointment.status == 'pending' %}bg-warning{% elif appointment.status == 'approved' %}bg-success{% elif appointment.status == 'completed' %}bg-info{% elif appointment.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ appointment.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-3 text-muted">No appointments yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-envelope me-2"></i>Recent Messages</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for message in recent_messages %}
+                            <tr>
+                                <td>{{ message.name }}</td>
+                                <td>{{ message.subject|truncatechars:20 }}</td>
+                                <td>
+                                    {% if message.is_read %}
+                                    <span class="badge bg-success">Read</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Unread</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-3 text-muted">No messages yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'dashboard:appointments' %}" class="btn btn-primary">
+                        <i class="fas fa-calendar-plus me-2"></i>View Appointments
+                    </a>
+                    <a href="{% url 'dashboard:services' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Add Service
+                    </a>
+                    <a href="{% url 'dashboard:testimonials' %}" class="btn btn-info text-white">
+                        <i class="fas fa-star me-2"></i>Add Testimonial
+                    </a>
+                    <a href="{% url 'dashboard:blog' %}" class="btn btn-warning text-dark">
+                        <i class="fas fa-pen me-2"></i>Write Blog Post
+                    </a>
+                    <a href="{% url 'dashboard:settings' %}" class="btn btn-secondary">
+                        <i class="fas fa-cog me-2"></i>Update Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

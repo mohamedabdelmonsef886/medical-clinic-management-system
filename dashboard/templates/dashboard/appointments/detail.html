@@ -1,0 +1,598 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Appointment Details - Clinic Dashboard{% endblock %}
+{% block page_title %}Appointment Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-section {
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .detail-section:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-value {
+        font-size: 1rem;
+        color: #2c3e50;
+        margin-top: 3px;
+    }
+    
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-badge.pending { background: #fff3cd; color: #856404; }
+    .status-badge.approved { background: #d4edda; color: #155724; }
+    .status-badge.confirmed { background: #d1ecf1; color: #0c5460; }
+    .status-badge.completed { background: #d4edda; color: #155724; }
+    .status-badge.rejected { background: #f8d7da; color: #721c24; }
+    .status-badge.cancelled { background: #e2e3e5; color: #383d41; }
+    
+    .time-slot-btn {
+        padding: 8px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
+    
+    .time-slot-btn:hover {
+        border-color: var(--primary-color);
+        background: rgba(0, 86, 179, 0.05);
+    }
+    
+    .time-slot-btn.selected {
+        border-color: var(--primary-color);
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .time-slot-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .sms-preview {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        border-left: 4px solid #25D366;
+        font-family: monospace;
+        white-space: pre-line;
+        font-size: 0.85rem;
+        color: #2c3e50;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .email-preview {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        border-left: 4px solid #007bff;
+        font-size: 0.9rem;
+        color: #2c3e50;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .btn-send-sms {
+        background: #25D366;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .btn-send-sms:hover {
+        background: #128C7E;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+    }
+    
+    .btn-send-email {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .btn-send-email:hover {
+        background: #0056b3;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-confirm {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+    
+    .btn-confirm:hover {
+        background: #1e7e34;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .notification-status {
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+    
+    .notification-status.sent {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+    
+    .notification-status.pending {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        color: #856404;
+    }
+    
+    @media (max-width: 768px) {
+        .time-slot-btn {
+            font-size: 0.75rem;
+            padding: 6px 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Appointment #{{ appointment.id }}</h5>
+                    <span class="status-badge {{ appointment.status }}">
+                        {{ appointment.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="appointmentForm">
+                    {% csrf_token %}
+                    
+                    <!-- Patient Information -->
+                    <div class="detail-section">
+                        <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Patient Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">Patient Name</div>
+                                <div class="detail-value"><strong>{{ appointment.patient_name }}</strong></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Age</div>
+                                <div class="detail-value">{{ appointment.patient_age|default:"N/A" }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Phone</div>
+                                <div class="detail-value">
+                                    <i class="fas fa-phone me-1"></i>
+                                    {{ appointment.patient_phone }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Email</div>
+                                <div class="detail-value">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    {{ appointment.patient_email }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appointment Details -->
+                    <div class="detail-section">
+                        <h6 class="text-primary mb-3"><i class="fas fa-calendar-check me-2"></i>Appointment Details</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">Location</div>
+                                <div class="detail-value">
+                                    {% if appointment.location %}
+                                        <strong>{{ appointment.location.name }}</strong>
+                                        <br>
+                                        <span class="text-muted small">{{ appointment.location.address }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Date</div>
+                                <div class="detail-value">{{ appointment.appointment_date|date:"l, F d, Y" }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Time</div>
+                                <div class="detail-value">
+                                    {% if appointment.appointment_time %}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>{{ appointment.appointment_time|time:"g:i A" }}</span>
+                                    {% else %}
+                                        <span class="text-warning"><i class="fas fa-clock me-1"></i>Not assigned yet</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Status</div>
+                                <div class="detail-value">
+                                    <select name="status" class="form-select" id="statusSelect">
+                                        <option value="pending" {% if appointment.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="approved" {% if appointment.status == 'approved' %}selected{% endif %}>Approved</option>
+                                        <option value="confirmed" {% if appointment.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                        <option value="completed" {% if appointment.status == 'completed' %}selected{% endif %}>Completed</option>
+                                        <option value="rejected" {% if appointment.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                                        <option value="cancelled" {% if appointment.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Assign Time Slot -->
+                    <div class="detail-section">
+                        <h6 class="text-primary mb-3"><i class="fas fa-clock me-2"></i>Assign Time</h6>
+                        
+                        <div class="form-group mb-3">
+                            <label class="form-label">Exact Appointment Time</label>
+                            <input type="time" name="appointment_time" id="appointmentTimeInput" class="form-control" 
+                                   value="{{ appointment.appointment_time|time:'H:i' }}">
+                            <small class="text-muted">Set the exact time for this appointment</small>
+                        </div>
+                        
+                        {% if available_slots %}
+                        <div class="mt-3">
+                            <label class="form-label">Or select from available slots:</label>
+                            <div class="row g-2">
+                                {% for slot in available_slots %}
+                                <div class="col-md-3 col-6">
+                                    <button type="button" class="time-slot-btn w-100"
+                                            onclick="selectSlot('{{ slot.time|time:'H:i' }}', '{{ slot.formatted }}')">
+                                        {{ slot.formatted }}
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No available slots for this date.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Reason & Notes -->
+                    <div class="detail-section">
+                        <h6 class="text-primary mb-3"><i class="fas fa-notes-medical me-2"></i>Visit Details</h6>
+                        <div class="detail-label">Reason for Visit</div>
+                        <p class="detail-value">{{ appointment.reason_for_visit|linebreaks }}</p>
+                        
+                        <div class="form-group mt-3">
+                            <label class="form-label">Admin Notes</label>
+                            <textarea name="notes" class="form-control" rows="3">{{ appointment.notes }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Appointment
+                        </button>
+                        <a href="{% url 'dashboard:appointments' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                        {% if appointment.status == 'pending' or appointment.status == 'approved' %}
+                        <button type="submit" name="status" value="confirmed" class="btn btn-confirm float-end" id="confirmBtn">
+                            <i class="fas fa-check-circle me-2"></i>Confirm & Send Notifications
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- SMS Preview -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fab fa-whatsapp me-2"></i>SMS Preview</h5>
+            </div>
+            <div class="card-body">
+                <div class="sms-preview" id="smsPreview">
+                    🏥 Appointment Confirmation
+
+Dear {{ appointment.patient_name }},
+
+Your appointment has been confirmed!
+
+📍 Location: {{ appointment.location.name|default:"Not assigned" }}
+📅 Date: {{ appointment.appointment_date|date:"l, F d, Y" }}
+🕐 Time: {% if appointment.appointment_time %}{{ appointment.appointment_time|time:"g:i A" }}{% else %}To be confirmed{% endif %}
+📍 Address: {{ appointment.location.address|default:"N/A" }}
+
+Please arrive 15 minutes before your appointment.
+Bring your ID and insurance card.
+
+Thank you for choosing our clinic!
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-send-sms w-100" onclick="sendSMS()">
+                        <i class="fab fa-whatsapp me-2"></i>Send SMS Now
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Email Preview -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-envelope me-2"></i>Email Preview</h5>
+            </div>
+            <div class="card-body">
+                <div class="email-preview" id="emailPreview">
+                    <strong>Subject:</strong> Appointment Confirmation - {{ settings.SITE_NAME }}
+                    
+                    Dear {{ appointment.patient_name }},
+                    
+                    Your appointment has been confirmed!
+                    
+                    Location: {{ appointment.location.name|default:"Not assigned" }}
+                    Date: {{ appointment.appointment_date|date:"l, F d, Y" }}
+                    Time: {% if appointment.appointment_time %}{{ appointment.appointment_time|time:"g:i A" }}{% else %}To be confirmed{% endif %}
+                    Address: {{ appointment.location.address|default:"N/A" }}
+                    
+                    Please arrive 15 minutes before your appointment.
+                    Bring your ID and insurance card.
+                    
+                    Thank you for choosing our clinic!
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-send-email w-100" onclick="sendEmail()">
+                        <i class="fas fa-envelope me-2"></i>Send Email Now
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                {% if appointment.status == 'pending' %}
+                <form method="POST" action="{% url 'dashboard:appointment_update_status' appointment.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="approved">
+                    <button type="submit" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-check me-2"></i>Approve
+                    </button>
+                </form>
+                <form method="POST" action="{% url 'dashboard:appointment_update_status' appointment.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="rejected">
+                    <button type="submit" class="btn btn-danger w-100 mb-2">
+                        <i class="fas fa-times me-2"></i>Reject
+                    </button>
+                </form>
+                {% endif %}
+                
+                {% if appointment.status == 'approved' or appointment.status == 'confirmed' %}
+                <form method="POST" action="{% url 'dashboard:appointment_update_status' appointment.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-check-double me-2"></i>Mark Complete
+                    </button>
+                </form>
+                {% endif %}
+                
+                <a href="{% url 'dashboard:appointment_delete' appointment.id %}" class="btn btn-danger w-100"
+                   onclick="return confirm('Are you sure you want to delete this appointment?');">
+                    <i class="fas fa-trash me-2"></i>Delete
+                </a>
+            </div>
+        </div>
+        
+        <!-- Timeline -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Timeline</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-calendar-plus text-primary me-2"></i>
+                        <strong>Created</strong>
+                        <br>
+                        <span class="text-muted small">{{ appointment.created_at|date:"M d, Y g:i A" }}</span>
+                    </li>
+                    {% if appointment.updated_at != appointment.created_at %}
+                    <li class="mb-2">
+                        <i class="fas fa-edit text-warning me-2"></i>
+                        <strong>Last Updated</strong>
+                        <br>
+                        <span class="text-muted small">{{ appointment.updated_at|date:"M d, Y g:i A" }}</span>
+                    </li>
+                    {% endif %}
+                    {% if appointment.status == 'confirmed' or appointment.status == 'approved' %}
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Confirmed</strong>
+                        <br>
+                        <span class="text-muted small">Appointment confirmed</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectSlot(time, formatted) {
+        // Remove selected class from all buttons
+        document.querySelectorAll('.time-slot-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked button
+        const btn = event.target;
+        btn.classList.add('selected');
+        
+        // Set the time in the input field
+        const timeInput = document.getElementById('appointmentTimeInput');
+        if (timeInput) {
+            timeInput.value = time;
+        }
+        
+        // Update SMS preview
+        updatePreviews(time, formatted);
+        
+        console.log('✅ Time slot selected:', time, formatted);
+    }
+    
+    function updatePreviews(time, formatted) {
+        // Update SMS preview
+        const smsPreview = document.getElementById('smsPreview');
+        if (smsPreview) {
+            let previewText = smsPreview.textContent;
+            // Update the time in the preview
+            const timeRegex = /🕐 Time: .+/;
+            previewText = previewText.replace(timeRegex, `🕐 Time: ${formatted}`);
+            smsPreview.textContent = previewText;
+        }
+        
+        // Update Email preview
+        const emailPreview = document.getElementById('emailPreview');
+        if (emailPreview) {
+            let previewText = emailPreview.textContent;
+            const timeRegex = /Time: .+/;
+            previewText = previewText.replace(timeRegex, `Time: ${formatted}`);
+            emailPreview.textContent = previewText;
+        }
+    }
+    
+    function sendSMS() {
+        if (confirm('Send SMS confirmation to the patient?')) {
+            const btn = document.querySelector('.btn-send-sms');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sending...';
+            btn.disabled = true;
+            
+            fetch(`/appointments/api/send-sms/{{ appointment.id }}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ SMS sent successfully!');
+                } else {
+                    alert('❌ Failed to send SMS: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('❌ Error sending SMS: ' + error);
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    }
+    
+    function sendEmail() {
+        if (confirm('Send email confirmation to the patient?')) {
+            const btn = document.querySelector('.btn-send-email');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sending...';
+            btn.disabled = true;
+            
+            fetch(`/appointments/api/send-email/{{ appointment.id }}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Email sent successfully!');
+                } else {
+                    alert('❌ Failed to send email: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('❌ Error sending email: ' + error);
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    }
+    
+    // Auto-submit when status changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusSelect = document.getElementById('statusSelect');
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                if (this.value === 'confirmed' || this.value === 'approved') {
+                    const timeInput = document.querySelector('input[name="appointment_time"]');
+                    if (!timeInput || !timeInput.value) {
+                        if (!confirm('No time set. Continue with confirmation?')) {
+                            this.value = '{{ appointment.status }}';
+                            return;
+                        }
+                    }
+                }
+                document.getElementById('appointmentForm').submit();
+            });
+        }
+    });
+</script>
+{% endblock %}

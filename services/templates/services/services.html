@@ -1,0 +1,409 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Our Services - {{ site_settings.site_name }}{% endblock %}
+{% block meta_description %}Explore our comprehensive medical services including general medicine, cardiology, dermatology, pediatrics, and more.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .services-hero {
+        background: linear-gradient(135deg, #f0f7ff 0%, #e0edff 100%);
+        padding: 80px 0 60px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .services-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(0, 86, 179, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    
+    .services-hero h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--dark-color);
+    }
+    
+    .services-hero h1 span {
+        color: var(--primary-color);
+    }
+    
+    /* Service Cards */
+    .service-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+        transition: all 0.4s ease;
+        height: 100%;
+        position: relative;
+    }
+    
+    .service-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    }
+    
+    .service-card .service-image {
+        height: 220px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .service-card .service-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .service-card:hover .service-image img {
+        transform: scale(1.05);
+    }
+    
+    .service-card .service-image .service-icon {
+        position: absolute;
+        bottom: -25px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        box-shadow: 0 5px 15px rgba(0, 86, 179, 0.3);
+        z-index: 2;
+    }
+    
+    .service-card .service-content {
+        padding: 25px 25px 20px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .service-card .service-content .service-tag {
+        display: inline-block;
+        background: rgba(0, 86, 179, 0.08);
+        color: var(--primary-color);
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+    }
+    
+    .service-card .service-content h4 {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+    
+    .service-card .service-content p {
+        color: #6c757d;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .service-card .service-content .service-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .service-card .service-content .service-meta .price {
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+    
+    .service-card .service-content .service-meta .duration {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    .service-card .service-content .service-meta .duration i {
+        color: var(--primary-color);
+        margin-right: 5px;
+    }
+    
+    .service-card .service-content .btn-outline-primary {
+        border-radius: 50px;
+        padding: 8px 20px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        border-width: 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .service-card .service-content .btn-outline-primary:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateX(5px);
+    }
+    
+    /* Featured Badge */
+    .service-card .featured-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: linear-gradient(135deg, #f7971e, #ffd200);
+        color: #2c3e50;
+        padding: 5px 15px;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        z-index: 2;
+        box-shadow: 0 3px 10px rgba(247, 151, 30, 0.3);
+    }
+    
+    /* Statistics Section */
+    .stats-section {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        padding: 60px 0;
+        color: white;
+    }
+    
+    .stats-section .stat-item {
+        text-align: center;
+    }
+    
+    .stats-section .stat-item .number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 5px;
+    }
+    
+    .stats-section .stat-item .label {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    
+    /* Pagination */
+    .pagination {
+        gap: 5px;
+    }
+    
+    .pagination .page-link {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        color: #6c757d;
+        padding: 8px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state h4 {
+        color: #6c757d;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .services-hero h1 {
+            font-size: 2.2rem;
+        }
+        
+        .service-card .service-image {
+            height: 180px;
+        }
+        
+        .stats-section .stat-item .number {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="services-hero">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1>Our <span>Medical Services</span></h1>
+                <p class="lead text-muted">We offer comprehensive healthcare services tailored to your needs. Our team of experienced professionals is dedicated to providing the highest quality care.</p>
+                <div class="divider mx-auto"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Grid -->
+<section class="py-5">
+    <div class="container">
+        {% if services %}
+            <div class="row g-4">
+                {% for service in services %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="service-card">
+                        {% if service.is_featured %}
+                        <div class="featured-badge">
+                            <i class="fas fa-star me-1"></i> Featured
+                        </div>
+                        {% endif %}
+                        
+                        <div class="service-image">
+                            {% if service.image %}
+                                <img src="{{ service.image.url }}" alt="{{ service.title }}">
+                            {% else %}
+                                <img src="{% static 'images/service-placeholder.jpg' %}" alt="{{ service.title }}">
+                            {% endif %}
+                            <div class="service-icon">
+                                <i class="fas {{ service.icon|default:'fa-heartbeat' }}"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="service-content">
+                            {% if service.category %}
+                            <span class="service-tag">{{ service.get_category_display }}</span>
+                            {% endif %}
+                            
+                            <h4>{{ service.title }}</h4>
+                            <p>{{ service.short_description|default:service.description|truncatechars:120 }}</p>
+                            
+                            <div class="service-meta">
+                                <div>
+                                    {% if service.price %}
+                                    <span class="price">${{ service.price }}</span>
+                                    {% else %}
+                                    <span class="price text-muted" style="font-size: 0.85rem;">Price on request</span>
+                                    {% endif %}
+                                    {% if service.duration %}
+                                    <span class="duration"><i class="fas fa-clock"></i> {{ service.duration }}</span>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'services:detail' service.slug %}" class="btn btn-outline-primary btn-sm">
+                                    Learn More <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if services.has_other_pages %}
+            <div class="mt-5">
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if services.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ services.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in services.paginator.page_range %}
+                        <li class="page-item {% if services.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if services.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ services.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-stethoscope"></i>
+                <h4>No Services Available</h4>
+                <p class="text-muted">We are currently updating our services. Please check back soon.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="number">{{ site_settings.years_experience|default:"15" }}+</div>
+                    <div class="label">Years Experience</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="number">{{ site_settings.happy_patients|default:"5000" }}+</div>
+                    <div class="label">Happy Patients</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="number">{{ site_settings.operations_completed|default:"2000" }}+</div>
+                    <div class="label">Procedures Done</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="number">{{ site_settings.awards_won|default:"12" }}+</div>
+                    <div class="label">Awards Won</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-light">
+    <div class="container text-center">
+        <h2 class="mb-3">Need Help Choosing a Service?</h2>
+        <p class="text-muted mb-4">Contact us and we'll help you find the right service for your needs.</p>
+        <a href="{% url 'core:contact' %}" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-envelope me-2"></i>Contact Us
+        </a>
+        <a href="{% url 'appointments:book' %}" class="btn btn-outline-primary btn-lg px-5 ms-2">
+            <i class="fas fa-calendar-plus me-2"></i>Book Appointment
+        </a>
+    </div>
+</section>
+{% endblock %}

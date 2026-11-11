@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Appointment Confirmation - {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center">
+            <div class="card p-5 shadow-sm">
+                <div class="text-center mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="mb-4">Appointment Booked Successfully!</h2>
+                <p class="lead">Thank you for booking an appointment with us.</p>
+                <p>We will review your appointment and send you a confirmation shortly.</p>
+                <div class="mt-4">
+                    <a href="{% url 'core:home' %}" class="btn btn-primary me-2">
+                        <i class="fas fa-home me-2"></i>Back to Home
+                    </a>
+                    <a href="{% url 'services:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-stethoscope me-2"></i>Our Services
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

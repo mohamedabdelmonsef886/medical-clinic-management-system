@@ -1,0 +1,251 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ service.title }} - {{ site_settings.site_name }}{% endblock %}
+{% block meta_description %}{{ service.short_description|default:service.description|truncatechars:160 }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .service-detail-hero {
+        background: linear-gradient(135deg, #f0f7ff 0%, #e0edff 100%);
+        padding: 60px 0 40px;
+    }
+    
+    .service-detail-hero .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+    
+    .service-detail-hero .breadcrumb-item a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .service-detail-hero .breadcrumb-item.active {
+        color: #6c757d;
+    }
+    
+    .service-detail-image {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .service-detail-image img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+    }
+    
+    .service-detail-content h2 {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 15px;
+    }
+    
+    .service-detail-content .service-icon-large {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+    }
+    
+    .service-detail-content .description {
+        color: #495057;
+        line-height: 1.8;
+        font-size: 1.05rem;
+    }
+    
+    .service-detail-content .meta-info {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .service-detail-content .meta-info .item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .service-detail-content .meta-info .item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .service-detail-content .meta-info .item i {
+        width: 25px;
+        color: var(--primary-color);
+    }
+    
+    .service-detail-content .book-btn {
+        padding: 12px 35px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .service-detail-content .book-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 86, 179, 0.3);
+    }
+    
+    /* Related Services */
+    .related-service-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .related-service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .related-service-card img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    
+    .related-service-card .content {
+        padding: 15px 20px 20px;
+    }
+    
+    .related-service-card .content h6 {
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 5px;
+    }
+    
+    .related-service-card .content p {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+    
+    @media (max-width: 768px) {
+        .service-detail-image img {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb & Hero -->
+<section class="service-detail-hero">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'services:list' %}">Services</a></li>
+                <li class="breadcrumb-item active">{{ service.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Service Detail -->
+<section class="py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="service-detail-image">
+                    {% if service.image %}
+                        <img src="{{ service.image.url }}" alt="{{ service.title }}">
+                    {% else %}
+                        <img src="{% static 'images/service-placeholder.jpg' %}" alt="{{ service.title }}">
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="service-detail-content">
+                    <div class="service-icon-large">
+                        <i class="fas {{ service.icon|default:'fa-heartbeat' }}"></i>
+                    </div>
+                    
+                    <h2>{{ service.title }}</h2>
+                    
+                    {% if service.is_featured %}
+                    <span class="badge bg-warning text-dark mb-3">
+                        <i class="fas fa-star me-1"></i> Featured Service
+                    </span>
+                    {% endif %}
+                    
+                    <div class="description">
+                        {{ service.description|linebreaks }}
+                    </div>
+                    
+                    <div class="meta-info">
+                        {% if service.price %}
+                        <div class="item">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span><strong>Price:</strong> ${{ service.price }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if service.duration %}
+                        <div class="item">
+                            <i class="fas fa-clock"></i>
+                            <span><strong>Duration:</strong> {{ service.duration }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="item">
+                            <i class="fas fa-user-md"></i>
+                            <span><strong>Service Type:</strong> {{ service.get_service_type_display|default:"Medical Service" }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 d-flex gap-3 flex-wrap">
+                        <a href="{% url 'appointments:book' %}" class="btn btn-primary book-btn">
+                            <i class="fas fa-calendar-plus me-2"></i>Book Appointment
+                        </a>
+                        <a href="{% url 'core:contact' %}" class="btn btn-outline-primary book-btn">
+                            <i class="fas fa-envelope me-2"></i>Ask a Question
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Related Services -->
+{% if related_services %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="section-title">
+            <h2>Related Services</h2>
+            <div class="divider mx-auto"></div>
+            <p>Explore other services we offer</p>
+        </div>
+        
+        <div class="row g-4 mt-2">
+            {% for related in related_services %}
+            <div class="col-md-4">
+                <div class="related-service-card">
+                    {% if related.image %}
+                        <img src="{{ related.image.url }}" alt="{{ related.title }}">
+                    {% else %}
+                        <img src="{% static 'images/service-placeholder.jpg' %}" alt="{{ related.title }}">
+                    {% endif %}
+                    <div class="content">
+                        <h6>{{ related.title }}</h6>
+                        <p>{{ related.short_description|default:related.description|truncatechars:80 }}</p>
+                        <a href="{% url 'services:detail' related.slug %}" class="btn btn-primary btn-sm">
+                            Learn More <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

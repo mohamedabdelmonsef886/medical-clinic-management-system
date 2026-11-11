@@ -1,0 +1,152 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Locations - Clinic Dashboard{% endblock %}
+{% block page_title %}Clinic Locations{% endblock %}
+
+{% block extra_css %}
+<style>
+    .location-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .location-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .location-card .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .location-card .name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .location-card .city {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .location-card .details {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .location-card .details span {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    .location-card .details i {
+        width: 18px;
+        color: var(--primary-color);
+    }
+    
+    .location-card .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .location-card .actions .btn {
+        padding: 4px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .status-badge {
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-badge.active { background: #d4edda; color: #155724; }
+    .status-badge.inactive { background: #f8d7da; color: #721c24; }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0">Manage Clinic Locations</h5>
+    <a href="{% url 'dashboard:location_add' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Add Location
+    </a>
+</div>
+
+{% if locations %}
+    {% for location in locations %}
+    <div class="location-card">
+        <div class="header">
+            <div>
+                <div class="name">{{ location.name }}</div>
+                <div class="city"><i class="fas fa-map-marker-alt"></i> {{ location.city }}{% if location.state %}, {{ location.state }}{% endif %}</div>
+            </div>
+            <div>
+                <span class="status-badge {% if location.is_active %}active{% else %}inactive{% endif %}">
+                    {% if location.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <div class="details">
+            <span><i class="fas fa-phone"></i> {{ location.phone }}</span>
+            {% if location.email %}
+            <span><i class="fas fa-envelope"></i> {{ location.email }}</span>
+            {% endif %}
+            {% if location.address %}
+            <span><i class="fas fa-home"></i> {{ location.address }}</span>
+            {% endif %}
+            {% if location.zip_code %}
+            <span><i class="fas fa-mailbox"></i> {{ location.zip_code }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="actions">
+            <a href="{% url 'dashboard:availability_add' %}?location={{ location.id }}" class="btn btn-success btn-sm">
+                <i class="fas fa-calendar-plus"></i> Add Availability
+            </a>
+            <a href="{% url 'dashboard:location_edit' location.id %}" class="btn btn-info btn-sm">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'dashboard:location_delete' location.id %}" class="btn btn-danger btn-sm">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-map-marker-alt"></i>
+    <h4>No Locations Added</h4>
+    <p>You need to add at least one clinic location before you can set availability.</p>
+    <a href="{% url 'dashboard:location_add' %}" class="btn btn-primary mt-3">
+        <i class="fas fa-plus me-2"></i>Add Your First Location
+    </a>
+</div>
+{% endif %}
+{% endblock %}

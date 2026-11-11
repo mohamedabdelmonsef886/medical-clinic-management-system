@@ -1,0 +1,676 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Settings - Clinic Dashboard{% endblock %}
+{% block page_title %}Website Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 30px;
+    }
+    
+    .settings-tabs {
+        border-bottom: 2px solid #f0f0f0;
+        margin-bottom: 30px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .settings-tabs .nav-link {
+        border: none;
+        padding: 12px 25px;
+        color: #6c757d;
+        font-weight: 500;
+        border-radius: 10px 10px 0 0;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .settings-tabs .nav-link:hover {
+        color: var(--primary-color);
+        background: rgba(0, 86, 179, 0.05);
+    }
+    
+    .settings-tabs .nav-link.active {
+        color: var(--primary-color);
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .settings-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary-color);
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .settings-tabs .nav-link i {
+        margin-right: 10px;
+    }
+    
+    .settings-section {
+        animation: fadeInUp 0.5s ease forwards;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-group .help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.15);
+    }
+    
+    .form-control::placeholder {
+        color: #adb5bd;
+    }
+    
+    .image-preview {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 10px;
+        margin-top: 10px;
+        border: 2px solid #f0f0f0;
+        object-fit: cover;
+    }
+    
+    .image-preview-lg {
+        max-width: 200px;
+        max-height: 200px;
+    }
+    
+    .current-image-container {
+        margin-top: 10px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px dashed #dee2e6;
+    }
+    
+    .current-image-container p {
+        margin-bottom: 5px;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .settings-actions {
+        border-top: 2px solid #f0f0f0;
+        padding-top: 25px;
+        margin-top: 30px;
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+    }
+    
+    .btn-save {
+        padding: 12px 40px;
+        font-weight: 600;
+        border-radius: 10px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+
+    }
+    
+    .btn-save:hover {
+        background: var(--secondary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 86, 179, 0.3);
+        color: white;
+    }
+    
+    .btn-save i {
+        margin-right: 10px;
+    }
+    
+    .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-cancel {
+        padding: 12px 40px;
+        font-weight: 600;
+        border-radius: 10px;
+        background: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-cancel:hover {
+        background: #e9ecef;
+        color: #495057;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Success animation for save button */
+    @keyframes saveSuccess {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .save-success {
+        animation: saveSuccess 0.5s ease;
+    }
+    
+    /* Loading spinner */
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.15em;
+    }
+    
+    @media (max-width: 768px) {
+        .settings-tabs .nav-link {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .settings-container {
+            padding: 20px 15px;
+        }
+        
+        .settings-actions {
+            flex-direction: column;
+        }
+        
+        .settings-actions .btn,
+        .settings-actions .btn-cancel {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Settings Tabs -->
+    <ul class="settings-tabs nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'general' %}active{% endif %}" data-bs-toggle="tab" href="#general" role="tab">
+                <i class="fas fa-cog"></i> General
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'doctor' %}active{% endif %}" data-bs-toggle="tab" href="#doctor" role="tab">
+                <i class="fas fa-user-md"></i> Doctor Profile
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'clinic' %}active{% endif %}" data-bs-toggle="tab" href="#clinic" role="tab">
+                <i class="fas fa-hospital"></i> Clinic Info
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'social' %}active{% endif %}" data-bs-toggle="tab" href="#social" role="tab">
+                <i class="fas fa-share-alt"></i> Social Media
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'stats' %}active{% endif %}" data-bs-toggle="tab" href="#stats" role="tab">
+                <i class="fas fa-chart-bar"></i> Statistics
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <form method="POST" enctype="multipart/form-data" id="settingsForm" action="{% url 'dashboard:settings' %}">
+        {% csrf_token %}
+        
+        <div class="tab-content">
+            <!-- General Settings Tab -->
+            <div class="tab-pane fade show {% if active_tab == 'general' %}active{% endif %}" id="general" role="tabpanel">
+                <div class="settings-section">
+                    <h5 class="mb-4"><i class="fas fa-globe text-primary me-2"></i>General Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.site_name.label_tag }}
+                                {{ form.site_name }}
+                                <div class="help-text">This appears in the browser tab and header</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.clinic_name.label_tag }}
+                                {{ form.clinic_name }}
+                                <div class="help-text">Displayed throughout the website</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.site_logo.label_tag }}
+                                <input type="file" name="site_logo" class="form-control" accept="image/*" id="id_site_logo">
+                                {% if form.instance.site_logo and form.instance.site_logo.url %}
+                                <div class="current-image-container">
+                                    <p>Current Logo:</p>
+                                    <img src="{{ form.instance.site_logo.url }}" alt="Logo" class="image-preview">
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" name="remove_logo" id="remove_logo" class="form-check-input">
+                                        <label for="remove_logo" class="form-check-label text-danger">
+                                            <i class="fas fa-trash me-1"></i> Remove current logo
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="help-text">Recommended size: 200x60px (PNG or SVG). Leave blank to keep current.</div>
+                            </div>
+                        </div>
+                        <!-- For site_favicon -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.site_favicon.label_tag }}
+                                <input type="file" name="site_favicon" class="form-control" accept="image/*" id="id_site_favicon">
+                                {% if form.instance.site_favicon %}
+                                <div class="current-image-container">
+                                    <p>Current Photo:</p>
+                                    <img src="{{ form.instance.doctor_image.url }}" alt="Doctor" class="image-preview image-preview-lg">
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" name="remove_doctor_image" id="remove_doctor_image" class="form-check-input">
+                                        <label for="remove_doctor_image" class="form-check-label text-danger">
+                                            <i class="fas fa-trash me-1"></i> Remove current photo
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="help-text">Recommended size: 32x32px (ICO or PNG). Leave blank to keep current.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor Profile Tab -->
+            <div class="tab-pane fade show {% if active_tab == 'doctor' %}active{% endif %}" id="doctor" role="tabpanel">
+                <div class="settings-section">
+                    <h5 class="mb-4"><i class="fas fa-user-md text-primary me-2"></i>Doctor Profile</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_name.label_tag }}
+                                {{ form.doctor_name }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_title.label_tag }}
+                                {{ form.doctor_title }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- For doctor_image -->
+                    <div class="form-group">
+                        {{ form.doctor_image.label_tag }}
+                        <input type="file" name="doctor_image" class="form-control" accept="image/*" id="id_doctor_image">
+                        {% if form.instance.doctor_image %}
+                        <div class="current-image-container">
+                            <p>Current Photo:</p>
+                            <img src="{{ form.instance.doctor_image.url }}" alt="Doctor" class="image-preview image-preview-lg">
+                            <div class="form-check mt-2">
+                                <input type="checkbox" name="remove_doctor_image" id="remove_doctor_image" class="form-check-input">
+                                <label for="remove_doctor_image" class="form-check-label text-danger">
+                                    <i class="fas fa-trash me-1"></i> Remove current photo
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="help-text">Recommended size: 600x600px (Square, JPG or PNG). Leave blank to keep current.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.doctor_biography.label_tag }}
+                        {{ form.doctor_biography }}
+                        <div class="help-text">A compelling introduction about the doctor's philosophy and approach</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_qualifications.label_tag }}
+                                {{ form.doctor_qualifications }}
+                                <div class="help-text">List qualifications (MD, FACP, etc.)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_experience.label_tag }}
+                                {{ form.doctor_experience }}
+                                <div class="help-text">Brief summary of experience</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_certifications.label_tag }}
+                                {{ form.doctor_certifications }}
+                                <div class="help-text">List all certifications</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_achievements.label_tag }}
+                                {{ form.doctor_achievements }}
+                                <div class="help-text">Notable achievements and awards</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_email.label_tag }}
+                                {{ form.doctor_email }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.doctor_phone.label_tag }}
+                                {{ form.doctor_phone }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinic Info Tab -->
+            <div class="tab-pane fade show {% if active_tab == 'clinic' %}active{% endif %}" id="clinic" role="tabpanel">
+                <div class="settings-section">
+                    <h5 class="mb-4"><i class="fas fa-hospital text-primary me-2"></i>Clinic Information</h5>
+                    
+                    <div class="form-group">
+                        {{ form.clinic_address.label_tag }}
+                        {{ form.clinic_address }}
+                        <div class="help-text">Full clinic address for the footer and contact page</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.clinic_phone.label_tag }}
+                                {{ form.clinic_phone }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.clinic_email.label_tag }}
+                                {{ form.clinic_email }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.working_hours.label_tag }}
+                        {{ form.working_hours }}
+                        <div class="help-text">One day per line. Example: Monday - Friday: 8:00 AM - 6:00 PM</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.google_maps_embed.label_tag }}
+                        {{ form.google_maps_embed }}
+                        <div class="help-text">
+                            Go to Google Maps, find your location, click Share, then Embed Map, and paste the iframe code here.
+                            <br>
+                            <small>Example: &lt;iframe src="https://www.google.com/maps/embed?..."&gt;&lt;/iframe&gt;</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Media Tab -->
+            <div class="tab-pane fade show {% if active_tab == 'social' %}active{% endif %}" id="social" role="tabpanel">
+                <div class="settings-section">
+                    <h5 class="mb-4"><i class="fas fa-share-alt text-primary me-2"></i>Social Media Links</h5>
+                    <p class="text-muted mb-4">Enter your social media profile URLs. Leave blank to hide the icon.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fab fa-facebook text-primary me-2"></i>Facebook</label>
+                                {{ form.facebook_url }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fab fa-twitter text-info me-2"></i>Twitter/X</label>
+                                {{ form.twitter_url }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fab fa-instagram text-danger me-2"></i>Instagram</label>
+                                {{ form.instagram_url }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fab fa-linkedin text-primary me-2"></i>LinkedIn</label>
+                                {{ form.linkedin_url }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fab fa-youtube text-danger me-2"></i>YouTube</label>
+                                {{ form.youtube_url }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div class="tab-pane fade show {% if active_tab == 'stats' %}active{% endif %}" id="stats" role="tabpanel">
+                <div class="settings-section">
+                    <h5 class="mb-4"><i class="fas fa-chart-bar text-primary me-2"></i>Website Statistics</h5>
+                    <p class="text-muted mb-4">These numbers appear on the homepage to build trust with visitors.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.years_experience.label_tag }}
+                                {{ form.years_experience }}
+                                <div class="help-text">Total years of practice</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.happy_patients.label_tag }}
+                                {{ form.happy_patients }}
+                                <div class="help-text">Total number of patients treated</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.operations_completed.label_tag }}
+                                {{ form.operations_completed }}
+                                <div class="help-text">Total procedures performed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.awards_won.label_tag }}
+                                {{ form.awards_won }}
+                                <div class="help-text">Number of awards and recognitions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="settings-actions">
+            <a href="{% url 'dashboard:home' %}" class="btn-cancel">
+                <i class="fas fa-times me-2"></i>Cancel
+            </a>
+            <button type="submit" class="btn-save" id="saveSettingsBtn" name="save_settings" value="1">
+                <i class="fas fa-save"></i> Save All Settings
+            </button>
+        </button>
+
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('settingsForm');
+        const saveBtn = document.getElementById('saveSettingsBtn');
+        
+        console.log('✅ Settings page loaded');
+        console.log('Form found:', !!form);
+        console.log('Save button found:', !!saveBtn);
+        
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Preview image before upload
+        document.querySelectorAll('input[type="file"]').forEach(function(input) {
+            input.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    const container = this.closest('.form-group');
+                    const preview = container ? container.querySelector('.image-preview') : null;
+                    
+                    if (preview) {
+                        reader.onload = function(e) {
+                            preview.src = e.target.result;
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                }
+            });
+        });
+        
+        // Handle form submission with loading state
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('📝 Form submitted!');
+                
+                // Don't prevent default - let the form submit naturally
+                // e.preventDefault(); // REMOVE THIS IF IT EXISTS
+                
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+                    saveBtn.classList.add('save-success');
+                }
+                
+                // Log form data for debugging
+                const formData = new FormData(form);
+                console.log('Form data being submitted:');
+                for (let [key, value] of formData.entries()) {
+                    if (key !== 'csrfmiddlewaretoken') {
+                        console.log(`  ${key}: ${value}`);
+                    }
+                }
+            });
+        }
+        
+        // Handle form submission errors (if any)
+        window.addEventListener('load', function() {
+            if (saveBtn) {
+                // Check if there are any error messages
+                const errors = document.querySelectorAll('.alert-danger');
+                if (errors.length > 0) {
+                    console.log('⚠️ Form errors found:', errors.length);
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save"></i> Save All Settings';
+                }
+            }
+        });
+        
+        // Handle tab activation via URL hash
+        const tabs = document.querySelectorAll('.settings-tabs .nav-link');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                const tabId = href.replace('#', '');
+                // Update URL without reload
+                const url = new URL(window.location);
+                url.searchParams.set('tab', tabId);
+                window.history.pushState({}, '', url);
+            });
+        });
+        
+        // Set active tab from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
+        if (activeTab) {
+            const tabLink = document.querySelector(`.settings-tabs .nav-link[href="#${activeTab}"]`);
+            if (tabLink) {
+                // Remove active class from all tabs
+                document.querySelectorAll('.settings-tabs .nav-link').forEach(t => t.classList.remove('active'));
+                // Add active class to current tab.
+                tabLink.classList.add('active');
+                // Show the corresponding tab content.
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+                const targetPane = document.getElementById(activeTab);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

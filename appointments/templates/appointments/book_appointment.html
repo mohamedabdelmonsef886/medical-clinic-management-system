@@ -1,0 +1,668 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Book Appointment - {{ site_settings.site_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+        gap: 30px;
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #adb5bd;
+        font-size: 0.9rem;
+    }
+    
+    .step.active {
+        color: var(--primary-color);
+    }
+    
+    .step.completed {
+        color: #28a745;
+    }
+    
+    .step .number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .step.active .number {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .step.completed .number {
+        background: #28a745;
+        color: white;
+    }
+    
+    .location-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .location-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        background: white;
+    }
+    
+    .location-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    }
+    
+    .location-card.selected {
+        border-color: var(--primary-color);
+        background: rgba(0, 86, 179, 0.05);
+        box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+    }
+    
+    .location-card .icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    
+    .location-card .name {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+    
+    .location-card .address {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .date-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        margin: 20px 0;
+    }
+    
+    .date-btn {
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        background: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-align: center;
+    }
+    
+    .date-btn:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    
+    .date-btn.selected {
+        border-color: var(--primary-color);
+        background: rgba(0, 86, 179, 0.05);
+    }
+    
+    .date-btn .day {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.9rem;
+    }
+    
+    .date-btn .date {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .date-btn .slots-count {
+        font-size: 0.7rem;
+        color: #28a745;
+        margin-top: 3px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(0,0,0,0.1);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    
+    .no-data i {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 15px;
+    }
+    
+    .step-content {
+        display: none;
+        animation: fadeInUp 0.4s ease forwards;
+    }
+    
+    .step-content.active {
+        display: block;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .summary-box {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-box .label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        letter-spacing: 0.5px;
+    }
+    
+    .summary-box .value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .info-box {
+        background: #e3f2fd;
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin: 15px 0;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .info-box i {
+        color: var(--primary-color);
+        margin-right: 10px;
+    }
+    
+    /* Date selection container */
+    #datesContainer {
+        margin-top: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .step-indicator {
+            gap: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .step .number {
+            width: 25px;
+            height: 25px;
+            font-size: 0.8rem;
+        }
+        
+        .location-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .date-grid {
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .location-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="booking-container">
+        <div class="text-center mb-5">
+            <h1 class="display-4">Book an Appointment</h1>
+            <div class="divider mx-auto"></div>
+            <p class="lead">Select your preferred location and date</p>
+        </div>
+        
+        <!-- Step Indicator - Only 2 steps -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <span class="number">1</span>
+                <span>Location & Date</span>
+            </div>
+            <div class="step" id="step2">
+                <span class="number">2</span>
+                <span>Your Details</span>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <form method="POST" id="bookingForm">
+                    {% csrf_token %}
+                    
+                    <!-- Step 1: Location and Date Selection -->
+                    <div class="step-content active" id="step1Content">
+                        <h5 class="mb-4"><i class="fas fa-map-marker-alt text-primary me-2"></i>Select Location</h5>
+                        
+                        <div id="locationError" class="alert alert-danger" style="display: none;">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Please select a location to continue.
+                        </div>
+                        
+                        <div class="location-grid" id="locationGrid">
+                            {% for location in locations %}
+                            <div class="location-card" data-location-id="{{ location.id }}" onclick="selectLocation(this)">
+                                <div class="icon">
+                                    <i class="fas fa-clinic-medical"></i>
+                                </div>
+                                <div class="name">{{ location.name }}</div>
+                                <div class="address">{{ location.city }}{% if location.state %}, {{ location.state }}{% endif %}</div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="no-data">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <h5>No Locations Available</h5>
+                                    <p>Please check back later or contact the clinic directly.</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Selected Location Display -->
+                        <div class="summary-box mb-3" style="display: none;" id="selectedLocationBox">
+                            <span class="label">Selected Location</span>
+                            <div class="value" id="selectedLocationDisplay">None</div>
+                        </div>
+                        
+                        <!-- Available Dates -->
+                        <div id="datesContainer" style="display: none;">
+                            <h5 class="mb-3"><i class="fas fa-calendar-alt text-primary me-2"></i>Select Date</h5>
+                            
+                            <div id="loadingDates" style="display: none;">
+                                <div class="text-center py-3">
+                                    <div class="loading-spinner"></div>
+                                    <p class="text-muted mt-2">Loading available dates...</p>
+                                </div>
+                            </div>
+                            
+                            <div id="datesGrid" class="date-grid">
+                                <!-- Dates will be loaded here -->
+                            </div>
+                            
+                            <div id="noDates" class="no-data" style="display: none;">
+                                <i class="fas fa-calendar-times"></i>
+                                <h5>No Available Dates</h5>
+                                <p>There are no available dates for this location. Please try another location.</p>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-primary" id="continueToDetailsBtn" onclick="continueToDetails()" style="display: none;">
+                                    Continue <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Info Box -->
+                        <div class="info-box" style="display: none;" id="infoBox">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>After booking:</strong> The clinic will confirm your appointment and send you the exact time via SMS or email.
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Patient Details -->
+                    <div class="step-content" id="step2Content">
+                        <h5 class="mb-4"><i class="fas fa-user text-primary me-2"></i>Your Information</h5>
+                        
+                        <!-- Hidden fields for location and date -->
+                        <input type="hidden" name="location" id="selectedLocation" value="">
+                        <input type="hidden" name="appointment_date" id="selectedDate" value="">
+                        
+                        <!-- Appointment Summary -->
+                        <div class="summary-box">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <span class="label">Location</span>
+                                    <div class="value" id="summaryLocation">Not selected</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="label">Date</span>
+                                    <div class="value" id="summaryDate">Not selected</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box mb-3">
+                            <i class="fas fa-clock"></i>
+                            <strong>Time:</strong> You will receive the exact appointment time via SMS/email after confirmation.
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="id_patient_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="patient_name" id="id_patient_name" class="form-control" 
+                                           placeholder="Enter your full name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="id_patient_age" class="form-label">Age</label>
+                                    <input type="number" name="patient_age" id="id_patient_age" class="form-control" 
+                                           placeholder="Your age" min="0" max="150">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="id_patient_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                    <input type="tel" name="patient_phone" id="id_patient_phone" class="form-control" 
+                                           placeholder="+1 (555) 123-4567" required>
+                                    <small class="text-muted">We'll send confirmation SMS to this number</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="id_patient_email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                    <input type="email" name="patient_email" id="id_patient_email" class="form-control" 
+                                           placeholder="your@email.com" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="id_reason_for_visit" class="form-label">Reason for Visit <span class="text-danger">*</span></label>
+                            <textarea name="reason_for_visit" id="id_reason_for_visit" class="form-control" 
+                                      rows="4" placeholder="Please describe your symptoms or reason for visit" required></textarea>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="id_notes" class="form-label">Additional Notes</label>
+                            <textarea name="notes" id="id_notes" class="form-control" 
+                                      rows="3" placeholder="Any additional information"></textarea>
+                        </div>
+                        
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="button" class="btn btn-secondary" onclick="goToStep(1)">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </button>
+                            <button type="submit" class="btn btn-success" id="submitBtn">
+                                <i class="fas fa-check-circle me-2"></i>Submit Booking Request
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedLocationId = null;
+    let selectedLocationName = null;
+    let selectedDate = null;
+    let currentStep = 1;
+    
+    // ============================================
+    // LOCATION SELECTION
+    // ============================================
+    
+    function selectLocation(element) {
+        // Remove selected class from all locations
+        document.querySelectorAll('.location-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked location
+        element.classList.add('selected');
+        
+        // Store selected location
+        selectedLocationId = element.dataset.locationId;
+        selectedLocationName = element.querySelector('.name').textContent;
+        
+        // Show selected location
+        document.getElementById('selectedLocationDisplay').textContent = selectedLocationName;
+        document.getElementById('selectedLocationBox').style.display = 'block';
+        
+        // Set hidden field
+        document.getElementById('selectedLocation').value = selectedLocationId;
+        
+        // Hide any previous error
+        document.getElementById('locationError').style.display = 'none';
+        
+        console.log('📍 Location selected:', selectedLocationId, selectedLocationName);
+        
+        // Load available dates for this location
+        loadAvailableDates(selectedLocationId);
+    }
+    
+    // ============================================
+    // LOAD AVAILABLE DATES
+    // ============================================
+    
+    function loadAvailableDates(locationId) {
+        const datesContainer = document.getElementById('datesContainer');
+        const datesGrid = document.getElementById('datesGrid');
+        const loadingDates = document.getElementById('loadingDates');
+        const noDates = document.getElementById('noDates');
+        const continueBtn = document.getElementById('continueToDetailsBtn');
+        const infoBox = document.getElementById('infoBox');
+        
+        // Show container and loading
+        datesContainer.style.display = 'block';
+        loadingDates.style.display = 'block';
+        datesGrid.innerHTML = '';
+        noDates.style.display = 'none';
+        continueBtn.style.display = 'none';
+        infoBox.style.display = 'none';
+        
+        // Fetch available dates
+        fetch(`/appointments/api/available-dates/?location_id=${locationId}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingDates.style.display = 'none';
+                console.log('📅 Available dates:', data);
+                
+                if (data.dates && data.dates.length > 0) {
+                    let html = '';
+                    data.dates.forEach(date => {
+                        html += `
+                            <div class="date-btn" onclick="selectDate(this, '${date.date}')" data-date="${date.date}">
+                                <div class="day">${date.day}</div>
+                                <div class="date">${date.formatted}</div>
+                                <div class="slots-count">Available</div>
+                            </div>
+                        `;
+                    });
+                    datesGrid.innerHTML = html;
+                    infoBox.style.display = 'block';
+                } else {
+                    noDates.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                loadingDates.style.display = 'none';
+                noDates.style.display = 'block';
+                console.error('Error loading dates:', error);
+            });
+    }
+    
+    // ============================================
+    // DATE SELECTION
+    // ============================================
+    
+    function selectDate(element, date) {
+        // Remove selected class from all dates
+        document.querySelectorAll('.date-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        // Add selected class
+        element.classList.add('selected');
+        
+        // Store selected date
+        selectedDate = date;
+        
+        // Set hidden field
+        document.getElementById('selectedDate').value = date;
+        
+        // Update summary
+        document.getElementById('summaryLocation').textContent = selectedLocationName;
+        document.getElementById('summaryDate').textContent = element.querySelector('.date').textContent;
+        
+        console.log('📅 Date selected:', date);
+        
+        // Show continue button
+        document.getElementById('continueToDetailsBtn').style.display = 'inline-block';
+    }
+    
+    // ============================================
+    // CONTINUE TO DETAILS
+    // ============================================
+    
+    function continueToDetails() {
+        const date = document.getElementById('selectedDate').value;
+        
+        if (!date) {
+            alert('Please select a date.');
+            return;
+        }
+        
+        // Go to step 2
+        goToStep(2);
+    }
+    
+    // ============================================
+    // STEP NAVIGATION
+    // ============================================
+    
+    function goToStep(step) {
+        currentStep = step;
+        
+        // Hide all step contents
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Show selected step
+        const content = document.getElementById(`step${step}Content`);
+        if (content) {
+            content.classList.add('active');
+        }
+        
+        // Update step indicators
+        document.querySelectorAll('.step').forEach(el => {
+            el.classList.remove('active', 'completed');
+        });
+        
+        for (let i = 1; i <= 2; i++) {
+            const stepEl = document.getElementById(`step${i}`);
+            if (stepEl) {
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                }
+            }
+        }
+        
+        // Scroll to top
+        document.querySelector('.card-body').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    // ============================================
+    // FORM SUBMISSION VALIDATION
+    // ============================================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('bookingForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const location = document.getElementById('selectedLocation').value;
+                const date = document.getElementById('selectedDate').value;
+                const name = document.getElementById('id_patient_name').value;
+                const phone = document.getElementById('id_patient_phone').value;
+                const email = document.getElementById('id_patient_email').value;
+                const reason = document.getElementById('id_reason_for_visit').value;
+                
+                console.log('🔍 Form submission validation:');
+                console.log('  Location:', location);
+                console.log('  Date:', date);
+                console.log('  Name:', name);
+                console.log('  Phone:', phone);
+                console.log('  Email:', email);
+                
+                if (!location) {
+                    e.preventDefault();
+                    alert('Please select a location.');
+                    return false;
+                }
+                
+                if (!date) {
+                    e.preventDefault();
+                    alert('Please select a date.');
+                    return false;
+                }
+                
+                if (!name || !phone || !email || !reason) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields.');
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+    });
+</script>
+{% endblock %}
